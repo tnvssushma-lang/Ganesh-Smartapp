@@ -1,91 +1,134 @@
 let extractedText = "";
 
 
-// Display selected bill image
-document.getElementById("billImage").addEventListener("change", function () {
-
-    const file = this.files[0];
-
-    if (file) {
-
-        const reader = new FileReader();
-
-        reader.onload = function (e) {
-
-            document.getElementById("preview").src = e.target.result;
-
-        };
-
-        reader.readAsDataURL(file);
-    }
-
-});
+// Preview uploaded bill image
+const billInput = document.getElementById("billImage");
+const previewImage = document.getElementById("preview");
 
 
-// Read bill
+if (billInput) {
+
+    billInput.addEventListener("change", function () {
+
+        const file = this.files[0];
+
+        if (file && previewImage) {
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+
+                previewImage.src = e.target.result;
+
+            };
+
+            reader.readAsDataURL(file);
+
+        }
+
+    });
+
+}
+
+
+
+// Read Bill Function
+
 async function uploadBill() {
+
 
     const file = document.getElementById("billImage").files[0];
 
 
     if (!file) {
 
-        alert("Please select a bill image");
+        alert("Please upload a bill image first");
 
         return;
 
     }
 
 
-    document.getElementById("status").innerText =
-        "Processing bill... Please wait";
+
+    const status =
+        document.getElementById("status");
+
+
+    const output =
+        document.getElementById("billText");
+
+
+
+    status.innerHTML =
+        "Preparing image...";
+
 
 
     try {
 
 
-        const enhancedImage = await enhanceImage(file);
+        const image =
+            await prepareImage(file);
 
 
 
-        const result = await Tesseract.recognize(
+        status.innerHTML =
+            "Reading bill...";
 
-            enhancedImage,
 
-            "eng+hin",
 
-            {
+        if (typeof Tesseract === "undefined") {
 
-                logger: function (data) {
+            throw new Error(
+                "OCR library not loaded"
+            );
 
-                    if (data.status) {
+        }
 
-                        document.getElementById("status").innerText =
-                            data.status +
-                            " " +
-                            Math.round(data.progress * 100) +
-                            "%";
+
+
+        const result =
+            await Tesseract.recognize(
+
+                image,
+
+                "eng",
+
+                {
+
+                    logger: function (info) {
+
+                        if (info.status) {
+
+                            status.innerHTML =
+                                info.status +
+                                " " +
+                                Math.round(
+                                    info.progress * 100
+                                ) +
+                                "%";
+
+                        }
 
                     }
 
                 }
 
-            }
-
-        );
+            );
 
 
 
-        extractedText = formatText(result.data.text);
+        extractedText =
+            cleanOCR(result.data.text);
 
 
 
-        document.getElementById("billText").value =
+        output.value =
             extractedText;
 
 
 
-        document.getElementById("status").innerText =
+        status.innerHTML =
             "Bill reading completed";
 
 
@@ -95,11 +138,11 @@ async function uploadBill() {
     catch(error) {
 
 
-        console.log(error);
+        console.error(error);
 
 
-        document.getElementById("status").innerText =
-            "Error reading bill. Try a clearer image.";
+        status.innerHTML =
+            "Error: " + error.message;
 
 
     }
@@ -109,23 +152,21 @@ async function uploadBill() {
 
 
 
-// Improve image before OCR
 
-function enhanceImage(file) {
+// Image enhancement
 
-
-    return new Promise((resolve) => {
+function prepareImage(file) {
 
 
-        const img = new Image();
+    return new Promise(function(resolve){
 
 
-        img.src = URL.createObjectURL(file);
+        const img =
+            new Image();
 
 
 
-        img.onload = function () {
-
+        img.onload = function(){
 
 
             const canvas =
@@ -137,14 +178,12 @@ function enhanceImage(file) {
 
 
 
-            // Increase resolution
-
             canvas.width =
-                img.width * 3;
+                img.width * 2;
 
 
             canvas.height =
-                img.height * 3;
+                img.height * 2;
 
 
 
@@ -165,33 +204,35 @@ function enhanceImage(file) {
 
 
             resolve(
-
                 canvas.toDataURL("image/png")
-
             );
 
 
         };
 
 
+
+        img.src =
+            URL.createObjectURL(file);
+
+
     });
+
 
 }
 
 
 
-// Clean OCR output
+// Clean OCR text
 
-function formatText(text) {
+function cleanOCR(text) {
 
 
     return text
 
         .replace(/[|{}<>[\]\\]/g, " ")
 
-        .replace(/\n+/g, "\n")
-
-        .replace(/ +/g, " ")
+        .replace(/\n\s*\n/g, "\n")
 
         .trim();
 
@@ -200,7 +241,8 @@ function formatText(text) {
 
 
 
-// Export CSV Excel file
+
+// Download CSV / Excel
 
 function downloadExcel() {
 
@@ -215,8 +257,8 @@ function downloadExcel() {
 
 
 
-    const csvContent =
-        "Bill Details\n\n" +
+    const csv =
+        "Extracted Bill Details\n\n" +
         extractedText;
 
 
@@ -224,9 +266,11 @@ function downloadExcel() {
     const blob =
         new Blob(
 
-            [csvContent],
+            [csv],
 
-            { type: "text/csv" }
+            {
+                type:"text/csv"
+            }
 
         );
 
@@ -237,18 +281,19 @@ function downloadExcel() {
 
 
 
-    const link =
+    const a =
         document.createElement("a");
 
 
-    link.href = url;
+    a.href =
+        url;
 
 
-    link.download =
-        "SmartBill_Bill_Data.csv";
+    a.download =
+        "SmartBill_Result.csv";
 
 
-    link.click();
+    a.click();
 
 
 }
