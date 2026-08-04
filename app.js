@@ -1,51 +1,43 @@
 let extractedText = "";
 
 
-// Get page elements
+// Get elements
 
 const billInput = document.getElementById("billImage");
 const preview = document.getElementById("preview");
 const readButton = document.getElementById("readButton");
 const excelButton = document.getElementById("excelButton");
-
 const statusText = document.getElementById("status");
 const billText = document.getElementById("billText");
 
 
 
-// Show uploaded image preview
+// Preview uploaded image
 
 billInput.addEventListener("change", function () {
 
-
     const file = billInput.files[0];
-
 
     if (file) {
 
-
         const reader = new FileReader();
 
-
-        reader.onload = function(e) {
+        reader.onload = function (e) {
 
             preview.src = e.target.result;
 
         };
 
-
         reader.readAsDataURL(file);
 
-
     }
-
 
 });
 
 
 
 
-// Read Bill button
+// Read Bill
 
 readButton.addEventListener("click", async function () {
 
@@ -67,11 +59,10 @@ readButton.addEventListener("click", async function () {
 
 
         statusText.innerHTML =
-        "Preparing image...";
+        "Enhancing image...";
 
 
-
-        const image =
+        const processedImage =
         await improveImage(file);
 
 
@@ -84,13 +75,16 @@ readButton.addEventListener("click", async function () {
         const result =
         await Tesseract.recognize(
 
-            image,
+            processedImage,
 
             "eng",
 
             {
 
-                logger:function(info){
+                tessedit_pageseg_mode: 6,
+
+
+                logger: function(info){
 
 
                     if(info.status){
@@ -99,10 +93,8 @@ readButton.addEventListener("click", async function () {
                         statusText.innerHTML =
                         info.status +
                         " " +
-                        Math.round(
-                            info.progress * 100
-                        ) +
-                        "%";
+                        Math.round(info.progress * 100)
+                        + "%";
 
 
                     }
@@ -138,15 +130,14 @@ readButton.addEventListener("click", async function () {
     catch(error){
 
 
-        console.log(error);
+        console.error(error);
 
 
         statusText.innerHTML =
-        "Error reading bill. Please try again.";
+        "Error: " + error.message;
 
 
     }
-
 
 
 });
@@ -156,12 +147,13 @@ readButton.addEventListener("click", async function () {
 
 
 
-// Improve image quality
+// Improve image for OCR
 
 function improveImage(file){
 
 
     return new Promise(function(resolve){
+
 
 
         const img =
@@ -170,6 +162,7 @@ function improveImage(file){
 
 
         img.onload = function(){
+
 
 
             const canvas =
@@ -182,13 +175,15 @@ function improveImage(file){
 
 
 
+            // Increase resolution
+
             canvas.width =
-            img.width * 2;
+            img.width * 4;
 
 
 
             canvas.height =
-            img.height * 2;
+            img.height * 4;
 
 
 
@@ -208,8 +203,87 @@ function improveImage(file){
 
 
 
+
+            let imageData =
+            ctx.getImageData(
+
+                0,
+
+                0,
+
+                canvas.width,
+
+                canvas.height
+
+            );
+
+
+
+            let data =
+            imageData.data;
+
+
+
+
+            // Convert to black and white
+
+            for(
+                let i = 0;
+                i < data.length;
+                i += 4
+            ){
+
+
+                let brightness =
+                (
+                    data[i] +
+                    data[i+1] +
+                    data[i+2]
+                ) / 3;
+
+
+
+                if(brightness < 170){
+
+
+                    data[i] = 0;
+                    data[i+1] = 0;
+                    data[i+2] = 0;
+
+
+                }
+
+                else{
+
+
+                    data[i] = 255;
+                    data[i+1] = 255;
+                    data[i+2] = 255;
+
+
+                }
+
+
+            }
+
+
+
+            ctx.putImageData(
+
+                imageData,
+
+                0,
+
+                0
+
+            );
+
+
+
             resolve(
+
                 canvas.toDataURL("image/png")
+
             );
 
 
@@ -221,6 +295,7 @@ function improveImage(file){
         URL.createObjectURL(file);
 
 
+
     });
 
 
@@ -229,7 +304,9 @@ function improveImage(file){
 
 
 
-// Clean OCR text
+
+
+// Clean OCR output
 
 function cleanText(text){
 
@@ -253,6 +330,7 @@ function cleanText(text){
 // Download Excel
 
 excelButton.addEventListener("click", function(){
+
 
 
     if(!extractedText){
@@ -305,7 +383,7 @@ excelButton.addEventListener("click", function(){
 
 
     link.download =
-    "SmartBill_Excel.csv";
+    "SmartBill_Result.csv";
 
 
 
