@@ -16,6 +16,7 @@ function preprocessImage(file) {
             canvas.width = img.width;
             canvas.height = img.height;
 
+
             ctx.drawImage(img, 0, 0);
 
 
@@ -30,8 +31,9 @@ function preprocessImage(file) {
             let data = imageData.data;
 
 
-            // Convert image to grayscale and improve contrast
+            // Convert to black and white + increase contrast
             for (let i = 0; i < data.length; i += 4) {
+
 
                 let brightness =
                 (data[i] + data[i + 1] + data[i + 2]) / 3;
@@ -44,10 +46,12 @@ function preprocessImage(file) {
                 data[i + 1] = brightness;
                 data[i + 2] = brightness;
 
+
             }
 
 
             ctx.putImageData(imageData, 0, 0);
+
 
 
             canvas.toBlob(function(blob) {
@@ -62,9 +66,11 @@ function preprocessImage(file) {
 
         img.src = URL.createObjectURL(file);
 
+
     });
 
 }
+
 
 
 
@@ -93,8 +99,9 @@ function processBill() {
     preprocessImage(file).then(cleanImage => {
 
 
+
         document.getElementById("status").innerHTML =
-            "Reading bill... Please wait";
+        "Reading bill... Please wait";
 
 
 
@@ -127,9 +134,12 @@ function processBill() {
                 },
 
 
-                tessedit_pageseg_mode: 6,
+                // Better for bills with columns
+                tessedit_pageseg_mode: 4,
+
 
                 preserve_interword_spaces: true
+
 
             }
 
@@ -152,8 +162,9 @@ function processBill() {
             "Bill reading completed";
 
 
-
         })
+
+
 
         .catch(error => {
 
@@ -168,10 +179,12 @@ function processBill() {
         });
 
 
+
     });
 
 
 }
+
 
 
 
@@ -197,15 +210,11 @@ function exportExcel() {
 
     let data = [
 
-
         ["SmartBill AI - Extracted Bill"],
-
 
         ["Details"],
 
-
         [extractedText]
-
 
     ];
 
