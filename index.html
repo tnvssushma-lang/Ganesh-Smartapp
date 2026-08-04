@@ -93,8 +93,47 @@ return;
 
 }
 
-document.getElementById("status").innerHTML="✅ Bill uploaded successfully.";
+document.getElementById("status").innerHTML = "Reading bill...";
 
+let formData = new FormData();
+formData.append("file", file);
+formData.append("apikey", "K81412699488957");
+formData.append("language", "eng");
+
+fetch("https://api.ocr.space/parse/image", {
+    method: "POST",
+    body: formData
+})
+.then(response => response.json())
+.then(result => {
+
+    if(result.ParsedResults && result.ParsedResults.length > 0){
+
+        let text = result.ParsedResults[0].ParsedText;
+
+        console.log(text);
+
+        document.getElementById("status").innerHTML =
+        "✅ Bill read successfully.";
+
+        alert(text);
+
+    }else{
+
+        document.getElementById("status").innerHTML =
+        "❌ Could not read the bill.";
+
+    }
+
+})
+.catch(error=>{
+
+    console.log(error);
+
+    document.getElementById("status").innerHTML =
+    "❌ Error reading bill.";
+
+});
 }
 
 </script>
