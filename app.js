@@ -1,23 +1,45 @@
 let extractedText = "";
 
 
-// Image preprocessing to improve OCR accuracy
+// Clean OCR output
+function cleanBillText(text) {
+
+    return text
+        .replace(/[|\\§{}[\]<>]/g, " ")
+        .replace(/[^\x20-\x7E\n]/g, "")
+        .replace(/[ ]{2,}/g, " ")
+        .replace(/\n\s*\n/g, "\n")
+        .trim();
+
+}
+
+
+
+// Improve image quality before OCR
 function preprocessImage(file) {
 
     return new Promise((resolve) => {
 
+
         let img = new Image();
+
 
         img.onload = function () {
 
+
             let canvas = document.createElement("canvas");
+
             let ctx = canvas.getContext("2d");
 
+
             canvas.width = img.width;
+
             canvas.height = img.height;
 
 
+
             ctx.drawImage(img, 0, 0);
+
 
 
             let imageData = ctx.getImageData(
@@ -31,7 +53,9 @@ function preprocessImage(file) {
             let data = imageData.data;
 
 
-            // Convert to black and white + increase contrast
+
+            // Convert to grayscale + improve contrast
+
             for (let i = 0; i < data.length; i += 4) {
 
 
@@ -39,15 +63,20 @@ function preprocessImage(file) {
                 (data[i] + data[i + 1] + data[i + 2]) / 3;
 
 
+
                 brightness = brightness < 150 ? 0 : 255;
 
 
+
                 data[i] = brightness;
+
                 data[i + 1] = brightness;
+
                 data[i + 2] = brightness;
 
 
             }
+
 
 
             ctx.putImageData(imageData, 0, 0);
@@ -56,20 +85,27 @@ function preprocessImage(file) {
 
             canvas.toBlob(function(blob) {
 
+
                 resolve(blob);
 
+
             }, "image/png");
+
 
 
         };
 
 
+
         img.src = URL.createObjectURL(file);
+
 
 
     });
 
 }
+
+
 
 
 
@@ -81,18 +117,21 @@ function processBill() {
     let file = document.getElementById("billImage").files[0];
 
 
+
     if (!file) {
+
 
         alert("Please select a bill image first.");
 
         return;
+
 
     }
 
 
 
     document.getElementById("status").innerHTML =
-        "Preparing image...";
+    "Preparing image...";
 
 
 
@@ -105,15 +144,21 @@ function processBill() {
 
 
 
+
         Tesseract.recognize(
+
 
             cleanImage,
 
+
             'eng',
+
 
             {
 
+
                 logger: function(info) {
+
 
 
                     if (info.status === "recognizing text") {
@@ -134,7 +179,9 @@ function processBill() {
                 },
 
 
-                // Better for bills with columns
+
+                // Better for bill columns
+
                 tessedit_pageseg_mode: 4,
 
 
@@ -144,22 +191,26 @@ function processBill() {
             }
 
 
+
         )
+
 
         .then(({ data: { text } }) => {
 
 
 
-            extractedText = text;
+            extractedText = cleanBillText(text);
 
 
 
-            document.getElementById("billText").value = text;
+            document.getElementById("billText").value =
+            extractedText;
 
 
 
             document.getElementById("status").innerHTML =
             "Bill reading completed";
+
 
 
         })
@@ -169,11 +220,14 @@ function processBill() {
         .catch(error => {
 
 
+
             console.log(error);
+
 
 
             document.getElementById("status").innerHTML =
             "Unable to read bill";
+
 
 
         });
@@ -184,6 +238,9 @@ function processBill() {
 
 
 }
+
+
+
 
 
 
@@ -210,11 +267,19 @@ function exportExcel() {
 
     let data = [
 
+
+
         ["SmartBill AI - Extracted Bill"],
+
+
 
         ["Details"],
 
+
+
         [extractedText]
+
+
 
     ];
 
@@ -222,13 +287,13 @@ function exportExcel() {
 
 
     let worksheet =
-        XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.aoa_to_sheet(data);
 
 
 
 
     let workbook =
-        XLSX.utils.book_new();
+    XLSX.utils.book_new();
 
 
 
