@@ -30,7 +30,9 @@ function processBill() {
 
                 }
 
-            }
+            },
+             tessedit_pageseg_mode: 6,
+    preserve_interword_spaces: true
         }
 
     ).then(({ data: { text } }) => {
