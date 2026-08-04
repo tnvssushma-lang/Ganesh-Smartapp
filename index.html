@@ -1,58 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>SmartBill AI</title>
+
 
     <link rel="stylesheet" href="style.css">
 
-    <!-- OCR Library -->
+
+    <!-- OCR Engine -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
 
 </head>
 
+
 <body>
+
 
 <div class="container">
 
+
     <h1>SmartBill AI</h1>
-    <p class="subtitle">Convert your bills into Excel</p>
+
+    <p class="subtitle">
+        Convert your bill into Excel
+    </p>
+
+
 
     <div class="card">
 
+
+        <label>
+            Upload Bill Image
+        </label>
+
+
         <input 
-            type="file" 
-            id="billImage" 
+            type="file"
+            id="billImage"
             accept="image/*"
         >
 
-        <img id="preview" class="preview" />
 
-        <button onclick="uploadBill()">
+
+        <img 
+            id="preview"
+            class="preview"
+            alt="Bill Preview"
+        >
+
+
+
+        <button id="readButton">
             Read Bill
         </button>
 
-        <div id="status"></div>
 
-        <h3>Extracted Details</h3>
 
-        <textarea 
+        <p id="status">
+        </p>
+
+
+
+        <h3>
+            Extracted Bill Details
+        </h3>
+
+
+
+        <textarea
             id="billText"
             placeholder="Bill details will appear here..."
         ></textarea>
 
 
-        <button onclick="downloadExcel()">
+
+        <button id="excelButton">
             Download Excel
         </button>
 
+
+
     </div>
+
 
 </div>
 
 
-<script src="script.js"></script>
+
+<script src="app.js"></script>
+
 
 </body>
+
 </html>
