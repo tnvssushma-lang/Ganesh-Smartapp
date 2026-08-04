@@ -1,4 +1,5 @@
 let extractedText = "";
+let billRows = [];
 
 
 // Clean OCR output
@@ -15,34 +16,108 @@ function cleanBillText(text) {
 
 
 
-// Improve image quality before OCR
+// Extract bill items
+function extractBillData(text) {
+
+    let lines = text.split("\n");
+
+    let rows = [];
+
+
+    lines.forEach(line => {
+
+
+        line = line.trim();
+
+
+        // Find lines containing prices
+        let numbers = line.match(/\d+\.\d{2}/g);
+
+
+        if (numbers && numbers.length >= 2) {
+
+
+            let amount = numbers[numbers.length - 1];
+
+            let price = numbers[numbers.length - 2];
+
+
+            let qty = "1";
+
+
+            let itemName = line
+                .replace(/\d+\.\d{2}/g, "")
+                .replace(/\d+/g, "")
+                .trim();
+
+
+
+            if (
+                itemName.length > 3 &&
+                !itemName.toLowerCase().includes("total") &&
+                !itemName.toLowerCase().includes("tax") &&
+                !itemName.toLowerCase().includes("gst")
+            ) {
+
+
+                rows.push([
+
+                    itemName,
+
+                    qty,
+
+                    price,
+
+                    amount
+
+                ]);
+
+            }
+
+
+        }
+
+
+    });
+
+
+    return rows;
+
+}
+
+
+
+
+
+
+// Image preprocessing
 function preprocessImage(file) {
 
-    return new Promise((resolve) => {
+
+    return new Promise((resolve)=>{
 
 
         let img = new Image();
 
 
-        img.onload = function () {
+        img.onload=function(){
 
 
-            let canvas = document.createElement("canvas");
+            let canvas=document.createElement("canvas");
 
-            let ctx = canvas.getContext("2d");
-
-
-            canvas.width = img.width;
-
-            canvas.height = img.height;
+            let ctx=canvas.getContext("2d");
 
 
+            canvas.width=img.width;
 
-            ctx.drawImage(img, 0, 0);
+            canvas.height=img.height;
+
+
+            ctx.drawImage(img,0,0);
 
 
 
-            let imageData = ctx.getImageData(
+            let imageData=ctx.getImageData(
                 0,
                 0,
                 canvas.width,
@@ -50,188 +125,44 @@ function preprocessImage(file) {
             );
 
 
-            let data = imageData.data;
+            let data=imageData.data;
 
 
-
-            // Convert to grayscale + improve contrast
-
-            for (let i = 0; i < data.length; i += 4) {
+            for(let i=0;i<data.length;i+=4){
 
 
                 let brightness =
-                (data[i] + data[i + 1] + data[i + 2]) / 3;
-
+                (data[i]+data[i+1]+data[i+2])/3;
 
 
                 brightness = brightness < 150 ? 0 : 255;
 
 
+                data[i]=brightness;
 
-                data[i] = brightness;
+                data[i+1]=brightness;
 
-                data[i + 1] = brightness;
-
-                data[i + 2] = brightness;
+                data[i+2]=brightness;
 
 
             }
 
 
-
-            ctx.putImageData(imageData, 0, 0);
-
+            ctx.putImageData(imageData,0,0);
 
 
-            canvas.toBlob(function(blob) {
 
+            canvas.toBlob(blob=>{
 
                 resolve(blob);
 
-
-            }, "image/png");
-
+            },"image/png");
 
 
         };
 
 
-
-        img.src = URL.createObjectURL(file);
-
-
-
-    });
-
-}
-
-
-
-
-
-
-
-function processBill() {
-
-
-    let file = document.getElementById("billImage").files[0];
-
-
-
-    if (!file) {
-
-
-        alert("Please select a bill image first.");
-
-        return;
-
-
-    }
-
-
-
-    document.getElementById("status").innerHTML =
-    "Preparing image...";
-
-
-
-    preprocessImage(file).then(cleanImage => {
-
-
-
-        document.getElementById("status").innerHTML =
-        "Reading bill... Please wait";
-
-
-
-
-        Tesseract.recognize(
-
-
-            cleanImage,
-
-
-            'eng',
-
-
-            {
-
-
-                logger: function(info) {
-
-
-
-                    if (info.status === "recognizing text") {
-
-
-                        let progress =
-                        Math.round(info.progress * 100);
-
-
-
-                        document.getElementById("status").innerHTML =
-                        "Reading bill... " + progress + "%";
-
-
-                    }
-
-
-                },
-
-
-
-                // Better for bill columns
-
-                tessedit_pageseg_mode: 4,
-
-
-                preserve_interword_spaces: true
-
-
-            }
-
-
-
-        )
-
-
-        .then(({ data: { text } }) => {
-
-
-
-            extractedText = cleanBillText(text);
-
-
-
-            document.getElementById("billText").value =
-            extractedText;
-
-
-
-            document.getElementById("status").innerHTML =
-            "Bill reading completed";
-
-
-
-        })
-
-
-
-        .catch(error => {
-
-
-
-            console.log(error);
-
-
-
-            document.getElementById("status").innerHTML =
-            "Unable to read bill";
-
-
-
-        });
-
+        img.src=URL.createObjectURL(file);
 
 
     });
@@ -246,78 +177,177 @@ function processBill() {
 
 
 
-
-function exportExcel() {
-
+function processBill(){
 
 
-    if (extractedText === "") {
+let file=document.getElementById("billImage").files[0];
 
 
-        alert("Please convert a bill first.");
+if(!file){
 
+alert("Please select a bill image first.");
 
-        return;
+return;
 
-
-    }
+}
 
 
 
-
-    let data = [
-
-
-
-        ["SmartBill AI - Extracted Bill"],
+document.getElementById("status").innerHTML =
+"Preparing image...";
 
 
 
-        ["Details"],
+preprocessImage(file).then(cleanImage=>{
+
+
+Tesseract.recognize(
+
+cleanImage,
+
+'eng',
+
+{
+
+
+logger:function(info){
+
+
+if(info.status==="recognizing text"){
+
+
+let progress=Math.round(info.progress*100);
+
+
+document.getElementById("status").innerHTML =
+"Reading bill... "+progress+"%";
+
+
+}
+
+
+},
+
+
+tessedit_pageseg_mode:4,
+
+preserve_interword_spaces:true
+
+
+}
+
+
+)
+
+.then(({data:{text}})=>{
+
+
+extractedText=cleanBillText(text);
 
 
 
-        [extractedText]
+billRows=extractBillData(extractedText);
 
 
 
-    ];
+document.getElementById("billText").value =
+extractedText;
+
+
+
+document.getElementById("status").innerHTML =
+"Bill reading completed";
+
+
+})
+
+.catch(error=>{
+
+
+console.log(error);
+
+
+document.getElementById("status").innerHTML =
+"Unable to read bill";
+
+
+});
+
+
+});
+
+
+}
 
 
 
 
-    let worksheet =
-    XLSX.utils.aoa_to_sheet(data);
 
 
 
 
-    let workbook =
-    XLSX.utils.book_new();
+
+function exportExcel(){
+
+
+
+if(billRows.length===0){
+
+
+alert("Please convert a bill first.");
+
+
+return;
+
+
+}
 
 
 
 
-    XLSX.utils.book_append_sheet(
-
-        workbook,
-
-        worksheet,
-
-        "Bill Details"
-
-    );
+let data=[
 
 
+["Item","Qty","Price","Amount"],
 
 
-    XLSX.writeFile(
+...billRows
 
-        workbook,
 
-        "SmartBill_Excel.xlsx"
+];
 
-    );
+
+
+
+let worksheet =
+XLSX.utils.aoa_to_sheet(data);
+
+
+
+let workbook =
+XLSX.utils.book_new();
+
+
+
+XLSX.utils.book_append_sheet(
+
+workbook,
+
+worksheet,
+
+"Bill Details"
+
+);
+
+
+
+XLSX.writeFile(
+
+workbook,
+
+"SmartBill_Excel.xlsx"
+
+);
 
 
 }
