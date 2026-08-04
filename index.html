@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ganesh SmartApp</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:#f5f5f5;
+}
+
+.container{
+    max-width:420px;
+    margin:40px auto;
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 0 20px rgba(0,0,0,0.15);
+    text-align:center;
+}
+
+h1{
+    color:#1565c0;
+}
+
+p{
+    color:#555;
+}
+
+input{
+    margin-top:20px;
+}
+
+button{
+    width:100%;
+    padding:15px;
+    margin-top:20px;
+    font-size:18px;
+    background:#1565c0;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#0d47a1;
+}
+
+#status{
+    margin-top:25px;
+    color:green;
+    font-weight:bold;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Ganesh SmartApp</h1>
+
+<p>Convert any bill into Excel</p>
+
+<input type="file" id="billImage" accept="image/*">
+
+<button onclick="uploadBill()">
+Upload Bill
+</button>
+
+<div id="status">
+Waiting for bill...
+</div>
+
+</div>
+
+<script>
+
+function uploadBill(){
+
+let file=document.getElementById("billImage").files[0];
+
+if(!file){
+
+alert("Please choose a bill.");
+
+return;
+
+}
+
+document.getElementById("status").innerHTML="✅ Bill uploaded successfully.";
+
+}
+
+</script>
+
+</body>
+</html>
