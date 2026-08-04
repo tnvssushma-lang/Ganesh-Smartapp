@@ -1,16 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>SmartBill AI</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBill AI</title>
 
     <link rel="stylesheet" href="style.css">
 
     <!-- OCR Library -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
-    <!-- Excel Export Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 </head>
 
@@ -19,50 +17,42 @@
 <div class="container">
 
     <h1>SmartBill AI</h1>
-    <p>Convert Bill Image to Excel</p>
+    <p class="subtitle">Convert your bills into Excel</p>
 
-    <div class="upload-box">
+    <div class="card">
 
         <input 
-        type="file" 
-        id="billImage" 
-        accept="image/*"
-        capture="environment">
+            type="file" 
+            id="billImage" 
+            accept="image/*"
+        >
 
-        <button onclick="processBill()">
-            Convert Bill
+        <img id="preview" class="preview" />
+
+        <button onclick="uploadBill()">
+            Read Bill
         </button>
 
-    </div>
-
-
-    <div id="status">
-        
-    </div>
-
-
-    <div class="result-box">
+        <div id="status"></div>
 
         <h3>Extracted Details</h3>
 
         <textarea 
-        id="billText"
-        placeholder="Bill details will appear here">
-        </textarea>
+            id="billText"
+            placeholder="Bill details will appear here..."
+        ></textarea>
+
+
+        <button onclick="downloadExcel()">
+            Download Excel
+        </button>
 
     </div>
-
-
-    <button class="excel-btn" onclick="exportExcel()">
-        Export to Excel
-    </button>
-
 
 </div>
 
 
-<script src="app.js"></script>
+<script src="script.js"></script>
 
 </body>
-
 </html>
