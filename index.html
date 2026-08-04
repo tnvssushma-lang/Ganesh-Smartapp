@@ -106,6 +106,8 @@ fetch("https://api.ocr.space/parse/image", {
 })
 .then(response => response.json())
 .then(result => {
+    console.log(result);
+alert(JSON.stringify(result));
 
     if(result.ParsedResults && result.ParsedResults.length > 0){
 
