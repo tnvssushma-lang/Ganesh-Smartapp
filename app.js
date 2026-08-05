@@ -11,7 +11,6 @@ const statusText = document.getElementById("status");
 const billText = document.getElementById("billText");
 
 
-
 // Preview uploaded image
 
 billInput.addEventListener("change", function () {
@@ -35,360 +34,179 @@ billInput.addEventListener("change", function () {
 });
 
 
-
-
 // Read Bill
 
 readButton.addEventListener("click", async function () {
 
-
     const file = billInput.files[0];
-
 
     if (!file) {
 
         alert("Please upload a bill image first");
-
         return;
 
     }
 
-
-
     try {
 
+        statusText.innerHTML = "Enhancing image...";
 
-        statusText.innerHTML =
-        "Enhancing image...";
+        const processedImage = await improveImage(file);
 
+        statusText.innerHTML = "Reading bill...";
 
-        const processedImage =
-        await improveImage(file);
-
-
-
-        statusText.innerHTML =
-        "Reading bill...";
-
-
-
-        const result =
-        await Tesseract.recognize(
-
+        const result = await Tesseract.recognize(
             processedImage,
-
             "eng",
-
             {
-
                 tessedit_pageseg_mode: 6,
+                logger: function (info) {
 
-
-                logger: function(info){
-
-
-                    if(info.status){
-
+                    if (info.status) {
 
                         statusText.innerHTML =
-                        info.status +
-                        " " +
-                        Math.round(info.progress * 100)
-                        + "%";
-
+                            info.status +
+                            " " +
+                            Math.round(info.progress * 100) +
+                            "%";
 
                     }
 
-
                 }
 
-
             }
-
-
         );
 
+        extractedText = cleanText(result.data.text);
 
+        billText.value = extractedText;
 
-        extractedText =
-        cleanText(result.data.text);
-
-
-
-        billText.value =
-        extractedText;
-
-
-
-        statusText.innerHTML =
-        "Bill reading completed";
-
+        statusText.innerHTML = "Bill reading completed";
 
     }
 
-
-    catch(error){
-
+    catch (error) {
 
         console.error(error);
 
-
-        statusText.innerHTML =
-        "Error: " + error.message;
-
+        statusText.innerHTML = "Error: " + error.message;
 
     }
-
 
 });
 
 
-
-
-
-
 // Improve image for OCR
 
-function improveImage(file){
+function improveImage(file) {
 
+    return new Promise(function (resolve) {
 
-    return new Promise(function(resolve){
+        const img = new Image();
 
+        img.onload = function () {
 
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
 
-        const img =
-        new Image();
-
-
-
-        img.onload = function(){
-
-
-
-            const canvas =
-            document.createElement("canvas");
-
-
-
-            const ctx =
-            canvas.getContext("2d");
-
-
-
-            // Increase resolution
-
-            canvas.width =
-            img.width * 4;
-
-
-
-            canvas.height =
-            img.height * 4;
-
-
+            canvas.width = img.width * 4;
+            canvas.height = img.height * 4;
 
             ctx.drawImage(
-
                 img,
-
                 0,
-
                 0,
-
                 canvas.width,
-
                 canvas.height
-
             );
 
-
-
-
-            let imageData =
-            ctx.getImageData(
-
+            let imageData = ctx.getImageData(
                 0,
-
                 0,
-
                 canvas.width,
-
                 canvas.height
-
             );
 
+            let data = imageData.data;
 
-
-            let data =
-            imageData.data;
-
-
-
-
-            // Convert to black and white
-
-            for(
-                let i = 0;
-                i < data.length;
-                i += 4
-            ){
-
+            for (let i = 0; i < data.length; i += 4) {
 
                 let brightness =
-                (
-                    data[i] +
-                    data[i+1] +
-                    data[i+2]
-                ) / 3;
+                    (data[i] + data[i + 1] + data[i + 2]) / 3;
 
-
-
-                if(brightness < 170){
-
+                if (brightness < 170) {
 
                     data[i] = 0;
-                    data[i+1] = 0;
-                    data[i+2] = 0;
-
+                    data[i + 1] = 0;
+                    data[i + 2] = 0;
 
                 }
-
-                else{
-
+                else {
 
                     data[i] = 255;
-                    data[i+1] = 255;
-                    data[i+2] = 255;
-
+                    data[i + 1] = 255;
+                    data[i + 2] = 255;
 
                 }
-
 
             }
 
-
-
             ctx.putImageData(
-
                 imageData,
-
                 0,
-
                 0
-
             );
-
-
 
             resolve(
-
                 canvas.toDataURL("image/png")
-
             );
-
 
         };
 
-
-
-        img.src =
-        URL.createObjectURL(file);
-
-
+        img.src = URL.createObjectURL(file);
 
     });
 
-
 }
-
-
-
-
 
 
 // Clean OCR output
 
-function cleanText(text){
-
+function cleanText(text) {
 
     return text
-
-    .replace(/[|{}<>[\]\\]/g," ")
-
-    .replace(/\n\s*\n/g,"\n")
-
-    .trim();
-
+        .replace(/[|{}<>[\]\\]/g, " ")
+        .replace(/\n\s*\n/g, "\n")
+        .trim();
 
 }
 
 
-
-
-
-
 // Download Excel
 
-excelButton.addEventListener("click", function(){
+excelButton.addEventListener("click", function () {
 
+    if (!extractedText) {
 
-
-    if(!extractedText){
-
-
-        alert(
-            "Please read the bill first"
-        );
-
-
+        alert("Please read the bill first");
         return;
-
 
     }
 
+    const csv = "Bill Details\n\n" + extractedText;
 
-
-    const csv =
-    "Bill Details\n\n" +
-    extractedText;
-
-
-
-    const blob =
-    new Blob(
-
+    const blob = new Blob(
         [csv],
-
-        {
-            type:"text/csv"
-        }
-
+        { type: "text/csv" }
     );
 
+    const url = URL.createObjectURL(blob);
 
+    const link = document.createElement("a");
 
-    const url =
-    URL.createObjectURL(blob);
-
-
-
-    const link =
-    document.createElement("a");
-
-
-
-    link.href =
-    url;
-
-
-
-    link.download =
-    "SmartBill_Result.csv";
-
-
+    link.href = url;
+    link.download = "SmartBill_Result.csv";
 
     link.click();
-
-
 
 });
